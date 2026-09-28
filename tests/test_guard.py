@@ -150,3 +150,12 @@ def test_refresh_failure_does_not_let_a_conflict_through(repo, cli, monkeypatch)
 def test_double_star_matches_newline_names():
     from agent_channel.claims import matches
     assert matches("src/**", "src/new\nline.py")
+
+
+def test_refuses_hooks_path_inside_another_worktree(repo, worktree):
+    import pytest
+    from agent_channel.errors import UsageError
+    run_git(repo, "config", "core.hooksPath", str(repo / "scripts" / "git-hooks"))
+    with pytest.raises(UsageError):
+        guard.install(worktree, ["/x/agent-channel"])  # absolute, outside *this* worktree, inside the main one
+    assert not (repo / "scripts" / "git-hooks" / "pre-commit").exists()

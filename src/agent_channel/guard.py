@@ -99,8 +99,7 @@ def hooks_dir(cwd) -> Path:
         configured = ""
     if configured:
         p = Path(configured).expanduser()
-        root = repo_root(cwd).resolve()
-        if not p.is_absolute() or p.resolve() == root or root in p.resolve().parents:
+        if not p.is_absolute() or any(p.resolve() == r or r in p.resolve().parents for r in _worktree_roots(cwd)):
             raise UsageError(
                 f"core.hooksPath is {configured!r}, inside the work tree: every worktree has its own copy, "
                 "usually tracked in git, so a guard written there would guard one worktree and leak a "
@@ -108,6 +107,15 @@ def hooks_dir(cwd) -> Path:
                 f"{BLOCKED} means block), or point core.hooksPath at an absolute directory outside the repository.")
         return p
     return common_dir(cwd) / "hooks"
+
+
+def _worktree_roots(cwd) -> list:
+    """Every checkout of this repository: a hooks dir inside any of them is tracked content."""
+    roots = [repo_root(cwd).resolve()]
+    for line in git(cwd, "worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree "):
+            roots.append(Path(line[len("worktree "):]).resolve())
+    return roots
 
 
 def _block(command) -> str:
