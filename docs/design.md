@@ -302,7 +302,8 @@ Git is not mocked.
 
 ## 16. Open questions
 
-1. GitHub owner (personal account or organisation) and whether the repository is public
-   from day one.
-2. Whether plugins add their `bin/` to `PATH` automatically. The design does not depend on
-   it (§10), but if they do, the README quickstart gets shorter.
+1. ~~GitHub owner~~ — resolved 2026-09-28: the user's personal account, public from day one.
+2. ~~Plugin `bin/` on PATH~~ — resolved 2026-09-28: Claude Code adds a plugin's `bin/` to the
+   Bash tool's PATH while the plugin is enabled
+   ([manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference.md#standard-layout)).
+   Agents call `agent-channel` by name; the hook still prints the absolute path as a fallback.
