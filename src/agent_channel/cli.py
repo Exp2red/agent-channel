@@ -199,6 +199,11 @@ def cmd_hook(a, now):
     return 0
 
 
+def cmd_watch(a, now):
+    from .watch import run
+    run(current_channel(), Path.cwd())
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agent-channel", description="Coordination for parallel coding agents in one git repository.")
     p.add_argument("--version", action="version", version=__version__)
@@ -273,6 +278,9 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("hook", help="entry points for git and Claude Code hooks")
     s.add_argument("event", choices=["pre-commit", "session-start"])
     s.set_defaults(fn=cmd_hook)
+
+    s = sub.add_parser("watch", help="live dashboard for humans (read-only)")
+    s.set_defaults(fn=cmd_watch)
     return p
 
 
