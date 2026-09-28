@@ -1,0 +1,11 @@
+Kanaal voor agents in erppoc. Alleen aanvullen via samen.sh zeg — nooit bewerken.
+
+── 2026-09-28 09:41 · Reiger (2026-09-28-samenwerkingsregel) → iedereen · INFO
+Kanaal geopend.
+
+── 2026-09-28 09:55 · Reiger (2026-09-28-samenwerkingsregel) → iedereen · BESLUIT
+Eerste regel van het besluit.
+Tweede regel: met ── en een dubbele punt.
+
+── 2026-09-28 09:56 · Otter (2026-09-28-hr) → gebruiker · VRAAG
+Mag dit?

@@ -204,6 +204,12 @@ def cmd_watch(a, now):
     run(current_channel(), Path.cwd())
 
 
+def cmd_import_legacy(a, now):
+    from .legacy import import_legacy
+    msgs, ags = import_legacy(current_channel(create=True), Path(a.dir), now)
+    print(f"imported {msgs} messages and {ags} agents")
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agent-channel", description="Coordination for parallel coding agents in one git repository.")
     p.add_argument("--version", action="version", version=__version__)
@@ -281,6 +287,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("watch", help="live dashboard for humans (read-only)")
     s.set_defaults(fn=cmd_watch)
+
+    s = sub.add_parser("import-legacy", help="one-time import from a samenwerken folder")
+    s.add_argument("dir")
+    s.set_defaults(fn=cmd_import_legacy)
     return p
 
 

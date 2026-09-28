@@ -1,0 +1,17 @@
+Naam:        Otter
+Taak/spec:   2026-09-28-hr
+Sessie:      erppoc-mainmerge-c9
+Worktree:    /home/x/erppoc-meldingen
+Branch:      feat/meldingen
+Gestart:     2026-09-28 09:40
+Status:      actief
+Doel:        HR-goedkeuring op de naad
+
+Claims (bestanden of gebieden die ik NU wijzig, één per regel):
+- backend/src/modules/governance/approval.service.ts
+- backend/src/modules/document/          (hele map)
+
+Raakt (lees ik, wijzig ik niet; seintje als het verandert):
+- backend/src/modules/x.ts
+
+Notities:
