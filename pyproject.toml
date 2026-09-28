@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-channel"
+version = "0.1.0"
+description = "Coordination for parallel coding agents in one git repository: claims, messages, a commit guard."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Q. Smits" }]
+classifiers = ["Programming Language :: Python :: 3", "Operating System :: POSIX", "Topic :: Software Development :: Version Control :: Git"]
+
+[project.scripts]
+agent-channel = "agent_channel.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
