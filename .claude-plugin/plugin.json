@@ -3,8 +3,8 @@
   "description": "Coordination for parallel coding agents in one git repository: identities, TTL claims, messages, and a pre-commit guard.",
   "version": "0.1.0",
   "author": { "name": "Q. Smits" },
-  "homepage": "https://github.com/<owner>/agent-channel",
-  "repository": "https://github.com/<owner>/agent-channel",
+  "homepage": "https://github.com/Exp2red/agent-channel",
+  "repository": "https://github.com/Exp2red/agent-channel",
   "license": "MIT",
   "keywords": ["multi-agent", "coordination", "git", "worktrees", "claims"]
 }

@@ -17,11 +17,11 @@ plugin, and some JSON files inside `.git/`.
 
 ```bash
 # in Claude Code
-/plugin marketplace add <owner>/agent-channel
+/plugin marketplace add Exp2red/agent-channel
 /plugin install agent-channel@agent-channel
 
 # once per repository (optional, recommended): block commits on others' claims
-pipx install git+https://github.com/<owner>/agent-channel
+pipx install git+https://github.com/Exp2red/agent-channel
 agent-channel install-guard
 
 # watch along

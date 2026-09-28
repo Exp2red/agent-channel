@@ -236,7 +236,7 @@ unambiguous. The layout is computed by `render.py`, so the curses layer only pai
 ## 12. Distribution
 
 - **Claude Code plugin.** `.claude-plugin/plugin.json` and `marketplace.json`, installed
-  with `/plugin marketplace add <owner>/agent-channel`. The plugin ships the skill
+  with `/plugin marketplace add Exp2red/agent-channel`. The plugin ships the skill
   (`skills/agent-channel/SKILL.md`), the SessionStart hook (`hooks/hooks.json`) and
   `bin/agent-channel`.
 - **pipx.** `pyproject.toml` defines an `agent-channel` console script for humans and for
