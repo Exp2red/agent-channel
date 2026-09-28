@@ -13,21 +13,32 @@ QUIET_AFTER = timedelta(hours=2)
 WILDCARDS = "*?"
 
 
-def normalize(pattern: str, root=None) -> str:
-    """Repository-relative, forward slashes, no '..'. A trailing '/' means the whole directory."""
+def normalize(pattern: str, root=None, cwd=None) -> str:
+    """Repository-relative, forward slashes, no '..'.
+
+    With a root, relative input is read relative to cwd (default: the root), the way a
+    shell user means it. A trailing '/' or an existing directory means the whole directory.
+    """
     p = (pattern or "").strip()
-    if root is not None and os.path.isabs(p):
+    whole_dir = p.endswith("/")
+    if p and root is not None:
+        base = cwd if cwd is not None else root
+        full = p if os.path.isabs(p) else os.path.join(str(base), p)
         try:
-            p = os.path.relpath(os.path.realpath(p), os.path.realpath(root))
+            p = os.path.relpath(os.path.realpath(full), os.path.realpath(root))
         except ValueError:
             raise UsageError(f"{pattern!r} is outside the repository") from None
+        if p == ".":
+            raise UsageError("claim something narrower than the whole repository")
     p = p.replace("\\", "/")
     while p.startswith("./"):
         p = p[2:]
     if not p or p.startswith("/") or ".." in p.split("/"):
-        raise UsageError(f"invalid path or pattern {pattern!r}: use a path relative to the repository root")
-    if p.endswith("/"):
-        p += "**"
+        raise UsageError(f"invalid path or pattern {pattern!r}: use a path inside the repository")
+    if not any(c in p for c in WILDCARDS) and root is not None and os.path.isdir(os.path.join(str(root), p)):
+        whole_dir = True
+    if whole_dir:
+        p = p.rstrip("/") + "/**"
     return p
 
 
@@ -49,7 +60,7 @@ def _regex(pattern: str):
         else:
             out.append(re.escape(pattern[i]))
             i += 1
-    return re.compile("".join(out) + r"\Z")
+    return re.compile("".join(out) + r"\Z", re.DOTALL)
 
 
 def matches(pattern: str, path: str) -> bool:

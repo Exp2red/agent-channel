@@ -68,7 +68,7 @@ def cmd_claim(a, now):
     ch = current_channel()
     ttl = claims.ttl_for(Path.cwd())
     root = repo_root(Path.cwd())
-    patterns = [claims.normalize(p, root) for p in a.patterns]
+    patterns = [claims.normalize(p, root, Path.cwd()) for p in a.patterns]
     try:
         claims.claim(ch, a.name, patterns, a.reason or "", now, ttl)
     except ClaimConflict as e:
@@ -82,7 +82,7 @@ def cmd_claim(a, now):
 def cmd_release(a, now):
     ch = current_channel()
     root = repo_root(Path.cwd())
-    patterns = [claims.normalize(p, root) for p in a.patterns]
+    patterns = [claims.normalize(p, root, Path.cwd()) for p in a.patterns]
     released = claims.release(ch, a.name, patterns, a.all or not patterns, now)
     if released:
         _post(ch, a.name, "RELEASE", " ".join(released), now)
@@ -92,7 +92,7 @@ def cmd_release(a, now):
 def cmd_touch(a, now):
     ch = current_channel()
     root = repo_root(Path.cwd())
-    claims.touch(ch, a.name, [claims.normalize(p, root) for p in a.patterns], now)
+    claims.touch(ch, a.name, [claims.normalize(p, root, Path.cwd()) for p in a.patterns], now)
 
 
 def cmd_check(a, now):
@@ -104,7 +104,7 @@ def cmd_check(a, now):
         agents.seen(ch, a.name, now)
     code = 0
     for raw in a.paths:
-        path = claims.normalize(raw, root)
+        path = claims.normalize(raw, root, Path.cwd())
         found = claims.holders(all_, path, now, ttl, exclude=a.name)
         if not found:
             print(f"{path}: free")
@@ -185,8 +185,13 @@ def cmd_gc(a, now):
 
 
 def cmd_install_guard(a, now):
-    path = guard.install(Path.cwd(), self_command())
+    command = self_command()
+    path = guard.install(Path.cwd(), command)
     print(f"guard installed in {path}")
+    if "/.claude/plugins/" in command[0]:
+        print(f"note: the guard runs the plugin's copy ({command[0]}), which moves when the plugin updates; "
+              "the guard then stops guarding (it never blocks). For a stable guard: "
+              "pipx install agent-channel, then run install-guard again.", file=sys.stderr)
 
 
 def cmd_hook(a, now):

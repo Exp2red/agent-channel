@@ -47,3 +47,15 @@ def test_read_filters(repo, cli):
     r = cli(repo, "read", "-n", "2")
     assert "msg 3" in r.stdout and "msg 4" in r.stdout and "msg 2" not in r.stdout
     assert "msg 1" in cli(repo, "read", "--grep", "MSG 1").stdout
+
+
+def test_check_and_claim_from_subdirectory(repo, cli):
+    sub = repo / "src" / "sub"
+    sub.mkdir(parents=True)
+    cli(repo, "join", "Otter", "--task", "t", "--goal", "g")
+    cli(repo, "join", "Reiger", "--task", "t", "--goal", "g")
+    assert cli(repo, "claim", "Otter", "src/sub/a.py").returncode == 0
+    r = cli(sub, "check", "a.py", "--as", "Reiger")
+    assert r.returncode == 3 and "src/sub/a.py" in r.stdout
+    assert cli(sub, "claim", "Reiger", "b.py").returncode == 0
+    assert "src/sub/b.py" in cli(repo, "who").stdout

@@ -98,3 +98,18 @@ def test_ttl_from_git_config(repo):
     assert claims.ttl_for(repo) == timedelta(minutes=90)
     with pytest.raises(UsageError):
         claims.parse_duration("soon")
+
+
+def test_paths_from_a_subdirectory_resolve_against_cwd(repo):
+    sub = repo / "src" / "sub"
+    sub.mkdir(parents=True)
+    assert claims.normalize("a.py", root=repo, cwd=sub) == "src/sub/a.py"
+    assert claims.normalize("./", root=repo, cwd=sub) == "src/sub/**"
+    assert claims.normalize("*.py", root=repo, cwd=sub) == "src/sub/*.py"
+    with pytest.raises(UsageError):
+        claims.normalize("../../../x", root=repo, cwd=sub)
+
+
+def test_existing_directory_without_slash_means_the_directory(repo):
+    (repo / "src").mkdir()
+    assert claims.normalize("src", root=repo, cwd=repo) == "src/**"

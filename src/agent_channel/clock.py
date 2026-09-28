@@ -3,6 +3,8 @@ from datetime import datetime
 
 
 def parse_ts(value: str) -> datetime:
+    if value.endswith(("Z", "z")):
+        value = value[:-1] + "+00:00"
     dt = datetime.fromisoformat(value)
     if dt.tzinfo is None:
         dt = dt.astimezone()

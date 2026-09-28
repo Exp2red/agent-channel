@@ -15,7 +15,7 @@ MAX_BODY = 4000
 @contextmanager
 def locked(ch):
     """Exclusive lock for every write in the channel. Not re-entrant: never nest."""
-    fd = os.open(ch / ".lock", os.O_RDWR | os.O_CREAT, 0o600)
+    fd = os.open(ch / ".lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         yield
@@ -42,8 +42,11 @@ def make_message(frm, task, to, kind, body, now, reply_to=None) -> dict:
 
 def append_unlocked(path, msg) -> None:
     line = (json.dumps(msg, ensure_ascii=False) + "\n").encode("utf-8")
-    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+    fd = os.open(path, os.O_RDWR | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
+        size = os.fstat(fd).st_size
+        if size and os.pread(fd, 1, size - 1) != b"\n":
+            line = b"\n" + line  # a torn last line (crash, hand edit) must not swallow this message
         os.write(fd, line)  # one write per message: readers never see half a line from us
     finally:
         os.close(fd)
@@ -67,8 +70,13 @@ def iter_file(path):
                 obj = json.loads(line)
             except ValueError:
                 continue
-            if isinstance(obj, dict) and "ts" in obj and "body" in obj:
-                yield obj
+            if not (isinstance(obj, dict) and isinstance(obj.get("id"), str) and isinstance(obj.get("body"), str)):
+                continue
+            try:
+                parse_ts(obj["ts"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            yield obj
 
 
 def read(ch, include_archive: bool = False) -> list:

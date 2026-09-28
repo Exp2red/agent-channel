@@ -24,15 +24,16 @@ the session-start summary. Below, `ac` is short for `agent-channel`.
 
 ## 2. Claim before you edit
 
-- `ac check <path>` before editing a file you have not claimed. Exit 3 means someone else
-  holds it: do not edit it.
+- `ac check <path> --as <Name>` before editing a file you have not claimed. Exit 3 means
+  someone else holds it: do not edit it. (Without `--as`, your own claims count too.)
 - `ac claim <Name> <path-or-glob>… --reason "…"`. Claim as narrowly as the work: a file,
   or `dir/**`, never the whole repository.
 - A conflict (exit 3) names the owner and their session. Ask them
   (`ac say <Name> <Owner> QUESTION "…"` **and** `SendMessage` to their session). Then do
   something else, or `ac status <Name> waiting`. Agree on an order or a split.
-- Claims expire 4 hours after your last `ac` command or commit. Keep working and they stay;
-  stop and they lapse.
+- Claims expire 4 hours after your last sign of life: `join`, `claim`, `release`, `touch`,
+  `say`, `status`, `check --as <Name>`, or a commit made as yourself. Reading (`read`, `who`,
+  `decisions`) does not count. Keep working and they stay; stop and they lapse.
 - Shared seams (a contract, a migration, a module other code depends on) affect agents who
   did not claim them. Post an `INFO` when you change one.
 

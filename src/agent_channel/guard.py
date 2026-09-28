@@ -5,13 +5,15 @@ from pathlib import Path
 
 from . import agents
 from .claims import expires, holders, ttl_for
-from .errors import NotARepo
+from .errors import NotARepo, UsageError
 from .paths import channel_dir, common_dir, git, repo_root
 from .render import delta
 from .store import append, make_message
 
 START = "# >>> agent-channel >>>"
 END = "# <<< agent-channel <<<"
+BLOCKED = 10  # the only exit code that blocks a commit; anything else (a missing tool, a crash) lets it through
+SHELLS = ("sh", "bash", "dash", "zsh", "ksh")
 
 
 def staged_paths(cwd) -> list:
@@ -52,9 +54,8 @@ def _pre_commit(cwd, env, now) -> int:
     ttl = ttl_for(cwd)
     everyone = agents.load_all(ch)
     hits = [(path, a, c) for path in staged_paths(cwd) for a, c in holders(everyone, path, now, ttl, exclude=me)]
-    if me and any(a["name"] == me for a in everyone):
-        agents.seen(ch, me, now)
     if not hits:
+        _refresh(ch, me, everyone, now)
         return 0
 
     committer = me or "unknown"
@@ -78,7 +79,17 @@ def _pre_commit(cwd, env, now) -> int:
     lines.append("To proceed anyway (recorded in the channel):  AGENT_CHANNEL_OVERRIDE=\"<reason>\" git commit ...")
     print("\n".join(lines), file=sys.stderr)
     append(ch, make_message("guard", "-", "all", "GUARD", f"BLOCKED commit by {committer}: {summary}", now))
-    return 1
+    return BLOCKED
+
+
+def _refresh(ch, me, everyone, now) -> None:
+    """A commit by a known agent counts as activity. Runs only after the decision, so a
+    failure here (e.g. gc archived the agent meanwhile) can never let a conflict through."""
+    if me and any(a["name"] == me for a in everyone):
+        try:
+            agents.seen(ch, me, now)
+        except Exception:
+            pass
 
 
 def hooks_dir(cwd) -> Path:
@@ -88,17 +99,50 @@ def hooks_dir(cwd) -> Path:
         configured = ""
     if configured:
         p = Path(configured).expanduser()
-        return p if p.is_absolute() else repo_root(cwd) / p
+        root = repo_root(cwd).resolve()
+        if not p.is_absolute() or p.resolve() == root or root in p.resolve().parents:
+            raise UsageError(
+                f"core.hooksPath is {configured!r}, inside the work tree: every worktree has its own copy, "
+                "usually tracked in git, so a guard written there would guard one worktree and leak a "
+                "machine-local path into a commit. Add this line to that hook yourself (exit code "
+                f"{BLOCKED} means block), or point core.hooksPath at an absolute directory outside the repository.")
+        return p
     return common_dir(cwd) / "hooks"
+
+
+def _block(command) -> str:
+    return (f"{START}\n"
+            f"# Blocks the commit only when the guard answers {BLOCKED}; a missing or broken tool never blocks.\n"
+            f"if [ -x {shlex.quote(command[0])} ]; then\n"
+            f"  _ac_rc=0; {shlex.join(command)} hook pre-commit || _ac_rc=$?\n"
+            f"  [ \"$_ac_rc\" -ne {BLOCKED} ] || exit 1\n"
+            f"fi\n"
+            f"{END}\n")
+
+
+def _interpreter(first_line: str) -> str:
+    parts = first_line[2:].split()
+    if not parts:
+        return ""
+    name = Path(parts[0]).name
+    if name == "env":
+        rest = [x for x in parts[1:] if not x.startswith("-")]
+        name = Path(rest[0]).name if rest else ""
+    return name
 
 
 def install(cwd, command) -> Path:
     d = hooks_dir(cwd)
     d.mkdir(parents=True, exist_ok=True)
     hook = d / "pre-commit"
-    block = f"{START}\n{shlex.join(command)} hook pre-commit || exit $?\n{END}\n"
+    block = _block(command)
+    manual = f"{shlex.join(command)} hook pre-commit   # exit code {BLOCKED} means: block the commit"
     if hook.exists():
         text = hook.read_text()
+        if text.startswith("#!") and _interpreter(text.partition("\n")[0]) not in SHELLS:
+            raise UsageError(f"{hook} is not a shell script; add the guard to it yourself:\n  {manual}")
+        if START in text and END not in text:
+            raise UsageError(f"{hook} has an agent-channel start marker but no end marker; fix it by hand first")
         if START in text:
             before, _, rest = text.partition(START)
             _, _, after = rest.partition(END)

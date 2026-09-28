@@ -23,8 +23,11 @@ agent-channel coordinates cooperative agents. It is not an access-control system
 - **The guard can be bypassed** with `AGENT_CHANNEL_OVERRIDE` (recorded) or
   `git commit --no-verify` (not recorded). It prevents accidents between cooperating
   agents; it does not stop a deceptive one.
-- **The guard fails open.** An internal error lets the commit through with a warning, so a
-  bug in this tool cannot block a repository.
+- **The guard fails open.** Only an explicit "blocked" answer (exit code 10) stops a commit.
+  An internal error, a missing interpreter or a moved plugin lets the commit through, so a
+  bug or an update of this tool cannot block a repository.
+- **Symlinks inside the channel are refused**, for the directory, its sub-directories and
+  every file in them.
 
 ## Why scope matters
 

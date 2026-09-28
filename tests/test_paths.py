@@ -51,3 +51,13 @@ def test_symlinked_subdir_is_refused(repo, tmp_path):
 def test_outside_git_raises(tmp_path):
     with pytest.raises(NotARepo):
         channel_dir(tmp_path)
+
+
+@pytest.mark.parametrize("name", ["channel.jsonl", ".lock", ".last-gc", "agents/Otter.json", "archive/2026-09.jsonl"])
+def test_symlinked_file_inside_channel_is_refused(repo, tmp_path, name):
+    ch = channel_dir(repo, create=True)
+    target = tmp_path / "outside.txt"
+    target.write_text("")
+    os.symlink(target, ch / name)
+    with pytest.raises(ChannelError):
+        channel_dir(repo)

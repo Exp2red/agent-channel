@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -52,4 +53,8 @@ def channel_dir(cwd, create: bool = False) -> Optional[Path]:
         if p.is_symlink():
             raise ChannelError(f"refusing {p}: symlinks are not allowed inside the channel")
         p.mkdir(mode=0o700, exist_ok=True)
+    for d in (ch, *(ch / s for s in SUBDIRS)):
+        for entry in os.scandir(d):
+            if entry.is_symlink():
+                raise ChannelError(f"refusing {entry.path}: symlinks are not allowed inside the channel")
     return ch
