@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
+os.environ["AGENT_CHANNEL_SELF"] = os.path.realpath(__file__)
+
+from agent_channel.cli import main  # noqa: E402
+
+sys.exit(main())

@@ -1,0 +1,11 @@
+{
+  "name": "agent-channel",
+  "owner": { "name": "Q. Smits" },
+  "plugins": [
+    {
+      "name": "agent-channel",
+      "source": "./",
+      "description": "Coordination for parallel coding agents in one git repository."
+    }
+  ]
+}
