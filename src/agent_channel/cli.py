@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 
 from . import __version__, agents, claims, guard
+from . import hook as hook_mod
 from .clock import now as clock_now
 from .errors import ChannelError, ClaimConflict, NoChannel
 from .gc import maybe_gc
@@ -191,6 +192,10 @@ def cmd_install_guard(a, now):
 def cmd_hook(a, now):
     if a.event == "pre-commit":
         return guard.pre_commit(Path.cwd(), os.environ, now)
+    try:  # a SessionStart hook must never fail the session
+        sys.stdout.write(hook_mod.session_start(sys.stdin.read(), self_command(), now))
+    except Exception:
+        pass
     return 0
 
 
