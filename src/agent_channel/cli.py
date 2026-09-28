@@ -5,7 +5,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import __version__, agents, claims
+from . import __version__, agents, claims, guard
 from .clock import now as clock_now
 from .errors import ChannelError, ClaimConflict, NoChannel
 from .gc import maybe_gc
@@ -183,6 +183,17 @@ def cmd_gc(a, now):
     print("archived messages older than 14 days and agents done for 7 days")
 
 
+def cmd_install_guard(a, now):
+    path = guard.install(Path.cwd(), self_command())
+    print(f"guard installed in {path}")
+
+
+def cmd_hook(a, now):
+    if a.event == "pre-commit":
+        return guard.pre_commit(Path.cwd(), os.environ, now)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agent-channel", description="Coordination for parallel coding agents in one git repository.")
     p.add_argument("--version", action="version", version=__version__)
@@ -250,6 +261,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("gc", help="archive now")
     s.set_defaults(fn=cmd_gc)
+
+    s = sub.add_parser("install-guard", help="add the claim guard to this repository's pre-commit hook")
+    s.set_defaults(fn=cmd_install_guard)
+
+    s = sub.add_parser("hook", help="entry points for git and Claude Code hooks")
+    s.add_argument("event", choices=["pre-commit", "session-start"])
+    s.set_defaults(fn=cmd_hook)
     return p
 
 
